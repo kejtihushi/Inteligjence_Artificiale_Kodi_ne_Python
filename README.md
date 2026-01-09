@@ -1,6 +1,6 @@
 Kodi në Python 
 
-Testimi i Algoritmeve të Klasifikimit në Python
+Testimi i Algoritmeve të Klasifikimit në Python (Google Colab)
 
 Ky repository përmban kodin Python për testimin e algoritmeve të klasifikimit mbi dataset-et Iris, Wine, Breast Cancer dhe Digits.  
 
