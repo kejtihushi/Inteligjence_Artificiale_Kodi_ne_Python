@@ -19,39 +19,57 @@ datasets = {
     "Digits": load_digits()
 }
 
-# Algoritmet
+# Algoritmet (me random_state për qëndrueshmëri)
 models = {
-    "Decision Tree": DecisionTreeClassifier(),
-    "Random Forest": RandomForestClassifier(),
+    "Decision Tree": DecisionTreeClassifier(random_state=42),
+    "Random Forest": RandomForestClassifier(random_state=42),
     "K-Nearest Neighbors": KNeighborsClassifier(),
     "Support Vector Machine": SVC(),
-    "Artificial Neural Network": MLPClassifier(max_iter=300)
+    "Artificial Neural Network": MLPClassifier(max_iter=300, random_state=42)
 }
 
-# Lista për rezultatet
+# Modelet që kërkojnë normalizim
+models_need_scaling = [
+    "K-Nearest Neighbors",
+    "Support Vector Machine",
+    "Artificial Neural Network"
+]
+
 results = []
 
 for dname, dataset in datasets.items():
     X, y = dataset.data, dataset.target
-    # Normalizim vetëm për KNN, SVM dhe MLP
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-    
+
+    # Split fillestar (pa scaling)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
     for mname, model in models.items():
-        # Wine dataset nuk përdor KNN sipas planit, mund të kontrollohet
+
+        # Wine dataset nuk përdor KNN sipas planit
         if dname == "Wine" and mname == "K-Nearest Neighbors":
             continue
-        
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        
+
+        # Normalizim vetëm kur është e nevojshme
+        if mname in models_need_scaling:
+            scaler = StandardScaler()
+            X_train_used = scaler.fit_transform(X_train)
+            X_test_used = scaler.transform(X_test)
+        else:
+            X_train_used = X_train
+            X_test_used = X_test
+
+        # Trajnimi dhe parashikimi
+        model.fit(X_train_used, y_train)
+        y_pred = model.predict(X_test_used)
+
+        # Metrikat
         acc = accuracy_score(y_test, y_pred)
         prec = precision_score(y_test, y_pred, average='weighted', zero_division=0)
         rec = recall_score(y_test, y_pred, average='weighted', zero_division=0)
         f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
-        
+
         results.append({
             "Dataset": dname,
             "Algoritëm": mname,
@@ -61,9 +79,8 @@ for dname, dataset in datasets.items():
             "F1-Score": round(f1, 4)
         })
 
-# Konvertimi në DataFrame dhe rregullimi i renditjes
+# Rezultatet finale
 df_results = pd.DataFrame(results)
 df_results = df_results.sort_values(by=["Dataset", "Algoritëm"]).reset_index(drop=True)
 
-# Shfaqja në një format të bukur
 print(df_results.to_string(index=False))
